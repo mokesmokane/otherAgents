@@ -37,6 +37,7 @@ class NodeDetailsSheet extends ConsumerWidget {
                       ),
                     ),
                     child: ListView(
+                      padding: EdgeInsets.only(top: 8),
                       controller: scrollController,
                       children: [
                         ListTile(

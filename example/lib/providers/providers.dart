@@ -41,7 +41,7 @@ class GraphState {
   final Map<String, Set<SimulationEdge>> nodeTargetEdges;
   final int maxEdgeCount;
   final String id;
-  final String name;
+  final String? name;
   GraphState({
     required this.name,
     required this.id,
@@ -166,7 +166,7 @@ class GraphState {
 
     return GraphState(
       id: id,
-      name: 'Untitled',
+      name: null,
       nodes: nodes,
       edges: edges,
       edgeCounts: edgeCounts,

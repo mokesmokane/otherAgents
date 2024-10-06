@@ -80,7 +80,7 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
                                   child: Padding(
                                     padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                                     child: Text(
-                                      graph.name,
+                                      graph.name??'Untitled',
                                       style: TextStyle(color: Theme.of(context).primaryColor),
                                       textAlign: TextAlign.center,
                                     ),
@@ -99,15 +99,24 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
       if(graph != null)canvas.Canvas(graphId: graphId!),
       if (selectedNode != null)
             DraggableScrollableSheet(
-              initialChildSize: 0.08,
-              minChildSize: 0.08,
+              initialChildSize: 0.16,
+              minChildSize: 0.0,
               maxChildSize: 0.5,
               snap: true,
               builder: (context, scrollController) {
-                return  NodeDetailsSheet(
-                  node: selectedNode!,
-                  scrollController: scrollController,
-                  graphId: graphId!, // Add this line
+                return NotificationListener<DraggableScrollableNotification>(
+                  onNotification: (notification) {
+                    if (notification.extent <= notification.minExtent) {
+                      // Sheet is dismissed, unselect the node
+                      ref.read(selectedNodeProvider(graphId!).notifier).state = null;
+                    }
+                    return true;
+                  },
+                  child: NodeDetailsSheet(
+                    node: selectedNode!,
+                    scrollController: scrollController,
+                    graphId: graphId!,
+                  ),
                 );
               },
             ),
@@ -203,15 +212,12 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
     );
   }
 Future<void> _createNewGraph(BuildContext context) async {
-  final name = await _showNameDialog(context);
-  if (name != null) {
-    graphId = Uuid().v4();
-    var graph = Graph.empty(graphId!, name);
-    ref.read(graphStateProvider(graphId!).notifier).set(GraphState.fromGraph(graph));
-    setState(() {
-      graphId = graph.id;
-    });
-  }
+  graphId = Uuid().v4();
+  var graph = Graph.empty(graphId!);
+  ref.read(graphStateProvider(graphId!).notifier).set(GraphState.fromGraph(graph));
+  setState(() {
+    graphId = graph.id;
+  });
 }
 Future<void> _showGraphList(BuildContext context) async {
   final graphs = await _loadGraphList();
@@ -230,7 +236,7 @@ Future<void> _showGraphList(BuildContext context) async {
         children: graphs.map((graph) {
           return SimpleDialogOption(
             onPressed: () => Navigator.pop(context, graph),
-            child: Text(graph.name),
+            child: Text(graph.name ?? 'Untitled'),
           );
         }).toList(),
       );
@@ -273,11 +279,21 @@ Future<void> clearHiveBox() async {
 }
 
 Future<void> _saveGraph(Graph graph) async {
+  if (graph.name == null || graph.name!.isEmpty) {
+    final name = await _showNameDialog(context);
+    if (name == null || name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Graph name is required to save')),
+      );
+      return;
+    }
+    graph = Graph(id: graph.id, name: name, vertices: graph.vertices, channels: graph.channels);
+  }
+
   Box<String> box;
   try {
     box = Hive.box<String>('graph');
   } catch (e) {
-    // If the box is not open, open it
     box = await Hive.openBox<String>('graph');
   }
   

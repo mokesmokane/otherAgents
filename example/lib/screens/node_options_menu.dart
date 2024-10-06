@@ -26,7 +26,14 @@ class NodeOptionsMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AnimatedOptionsList(
+    return  Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () => onDismiss(),
+            child: Container(color: Colors.transparent),
+          ),
+        ),AnimatedOptionsList(
         options: [
           if(startNode == null)'Add Start Node', 
           if(endNode == null)'Add End Node',
@@ -51,7 +58,9 @@ class NodeOptionsMenu extends ConsumerWidget {
         },
         onDismiss: () => onDismiss(),
         position: longPressPosition,
-      );
+      ),
+      ],
+    );
   }
 
 

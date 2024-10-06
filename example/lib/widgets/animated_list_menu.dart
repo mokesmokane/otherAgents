@@ -66,6 +66,22 @@ class _AnimatedOptionsListState extends State<AnimatedOptionsList> with TickerPr
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final menuWidth = 200.0;
+    final menuHeight = widget.options.length * 56.0; // Assuming each option is 56 pixels high
+
+    // Adjust position if it goes off-screen
+    double adjustedLeft = widget.position.dx;
+    double adjustedTop = widget.position.dy;
+
+    if (adjustedLeft + menuWidth > screenSize.width) {
+      adjustedLeft = screenSize.width - menuWidth;
+    }
+
+    if (adjustedTop + menuHeight > screenSize.height) {
+      adjustedTop = screenSize.height - menuHeight;
+    }
+
     return Material(
       color: Colors.transparent,
       child: Stack(
@@ -73,19 +89,19 @@ class _AnimatedOptionsListState extends State<AnimatedOptionsList> with TickerPr
           Positioned.fill(
             child: GestureDetector(
               onTap: _handleDismiss,
-              child: Container(color: Colors.transparent),
+              child: Container(color: Colors.black.withOpacity(0.5)),
             ),
           ),
           Positioned(
-            left: widget.position.dx,
-            top: widget.position.dy,
+            left: adjustedLeft,
+            top: adjustedTop,
             child: SizeTransition(
               sizeFactor: _sizeAnimation,
               axisAlignment: -1,
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: SizedBox(
-                  width: 200,
+                  width: menuWidth,
                   child: Card(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
