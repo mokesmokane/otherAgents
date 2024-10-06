@@ -30,6 +30,10 @@ class SimulationCanvasObject
       parentData.edges = edges;
     }
 
+    if (parentData.node != node) {
+      parentData.node = node;
+    }
+
     if (parentData.constraints != constraints) {
       parentData.constraints = constraints;
     }

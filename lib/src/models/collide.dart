@@ -15,7 +15,7 @@ class Collide<N extends Node> implements IForce<N> {
     double strength = 1,
     AccessorCallback<double, N>? onRadius,
   })  : _strength = strength,
-        _radii = [] {
+        _radii = {} {
     _radius = onRadius ?? (_) => radius;
   }
 
@@ -32,7 +32,7 @@ class Collide<N extends Node> implements IForce<N> {
 
   late Quadtree<N> _tree;
   LCG? random;
-  List<double> _radii;
+  Map<String, double> _radii;
 
   late AccessorCallback<double, N> _radius;
   set radius(AccessorCallback<double, N> fn) {
@@ -48,9 +48,9 @@ class Collide<N extends Node> implements IForce<N> {
       y: (n) => n.y + n.vy,
     )..visitAfter(prepare);
 
-    for (var i = 0; i < n; ++i) {
+    for (var i = 0; i < nodes!.length; ++i) {
       node = nodes![i];
-      ri = _radii[node.index!];
+      ri = _radii[node.id]!;
       ri2 = ri * ri;
       xi = node.x + node.vx;
       yi = node.y + node.vy;
@@ -61,7 +61,7 @@ class Collide<N extends Node> implements IForce<N> {
   bool _apply(IQuadtreeNode<N>? quad, Extent e) {
     double rj = quad?.r ?? 0, r = ri + rj;
     if (quad is ILeafNode<N>) {
-      if (quad.point.index! > node.index!) {
+      if (quad.point.id.compareTo(node.id) > 0) {
         final N point = quad.point;
         double x = xi - point.x - point.vx,
             y = yi - point.y - point.vy,
@@ -94,7 +94,7 @@ class Collide<N extends Node> implements IForce<N> {
 
   bool prepare(IQuadtreeNode<N>? quad, Extent _) {
     if (quad is ILeafNode<N>) {
-      quad.r = _radii[quad.point.index!];
+      quad.r = _radii[quad.point.id]!;
       return quad.r != 0;
     } else {
       for (final node in [...?(quad as IInternalNode<N>?)?.nodes]) {
@@ -107,10 +107,9 @@ class Collide<N extends Node> implements IForce<N> {
   void _initialize() {
     if (nodes == null) return;
 
-    _radii = List.filled(n, 0);
-    for (int i = 0; i < n; ++i) {
-      final node = nodes![i];
-      _radii[node.index!] = _radius(node);
+    _radii.clear();
+    for (final node in nodes!) {
+      _radii[node.id] = _radius(node);
     }
   }
 

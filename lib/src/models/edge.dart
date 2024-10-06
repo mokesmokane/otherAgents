@@ -20,32 +20,28 @@ class Edge<N extends Node> {
 class Edges<E extends Edge<N>, N extends Node> implements IForce<N> {
   Edges({
     this.iterations = 1,
-    // int Function(N)? id,
     AccessorCallback<double, E>? onDistance,
     AccessorCallback<double, E>? onStrength,
     double distance = 30,
     List<E>? edges,
   })  : distances = [],
         strengths = [],
-        count = [],
+        count = {},
         bias = [],
         _edges = edges ?? [] {
-    // _id = id ?? (n) => n.index;
     _strength = onStrength ??
         (E edge) =>
-            1 / min(count[edge.source.index!], count[edge.target.index!]);
+            1 / min(count[edge.source.id]!, count[edge.target.id]!);
     _distance = onDistance ?? (_) => distance;
   }
 
-  // TODO: make dynamic
-  // late int Function(N) _id;
   @override
   List<N>? nodes;
   late List<E> _edges;
 
   int iterations;
   List<double> distances, strengths, bias;
-  List<int> count;
+  Map<String, int> count;
   LCG? random;
 
   late AccessorCallback<double, E> _strength, _distance;
@@ -100,22 +96,23 @@ class Edges<E extends Edge<N>, N extends Node> implements IForce<N> {
 
   void _initialize() {
     if (nodes == null) return;
-    count = List.filled(n, 0);
-    // final nodeById = {for (final n in nodes!) _id(n): n};
+    count.clear();
+    for (final node in nodes!) {
+      count[node.id] = 0;
+    }
 
     for (int i = 0; i < m; i++) {
       final edge = _edges[i];
       edge.index = i;
-      // edge.source = find(nodebyId, edge.source);
-      count[edge.source.index!] += 1;
-      count[edge.target.index!] += 1;
+      count[edge.source.id] = (count[edge.source.id] ?? 0) + 1;
+      count[edge.target.id] = (count[edge.target.id] ?? 0) + 1;
     }
 
     bias = List.filled(m, 0);
     for (int i = 0; i < m; i++) {
       final edge = _edges[i];
-      final totalDegree = count[edge.source.index!] + count[edge.target.index!];
-      bias[i] = count[edge.source.index!] / totalDegree;
+      final totalDegree = count[edge.source.id]! + count[edge.target.id]!;
+      bias[i] = count[edge.source.id]! / totalDegree;
     }
 
     strengths = List.filled(m, 0);
@@ -141,10 +138,4 @@ class Edges<E extends Edge<N>, N extends Node> implements IForce<N> {
     random = _random;
     _initialize();
   }
-
-  // N find(Map<String, N> nodeById, String nodeId) {
-  //   final node = nodeById[nodeId];
-  //   if (node == null) throw StateError('Node not found: $nodeId');
-  //   return node;
-  // }
 }

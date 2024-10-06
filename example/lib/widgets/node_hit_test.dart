@@ -10,6 +10,8 @@ class NodeHitTester extends SingleChildRenderObjectWidget {
     required Widget child,
     required this.onDragUpdate,
     required this.onDragEnd,
+    required this.onTap,
+    this.onLongPress,
     Key? key,
   }) : super(key: key, child: child);
 
@@ -17,6 +19,8 @@ class NodeHitTester extends SingleChildRenderObjectWidget {
 
   final GestureDragUpdateCallback onDragUpdate;
   final GestureDragEndCallback onDragEnd;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -24,6 +28,8 @@ class NodeHitTester extends SingleChildRenderObjectWidget {
       node,
       onDragUpdate: onDragUpdate,
       onDragEnd: onDragEnd,
+      onTap: onTap,
+      onLongPress: onLongPress,
     );
   }
 
@@ -33,7 +39,8 @@ class NodeHitTester extends SingleChildRenderObjectWidget {
     renderObject
       ..node = node
       ..onDragUpdate = onDragUpdate
-      ..onDragEnd = onDragEnd;
+      ..onDragEnd = onDragEnd
+      ..onTap = onTap;
   }
 }
 
@@ -42,13 +49,19 @@ class RenderNodeHitTester extends RenderProxyBox {
     this._node, {
     required GestureDragUpdateCallback onDragUpdate,
     required GestureDragEndCallback onDragEnd,
+    required VoidCallback onTap,
+    VoidCallback? onLongPress,
   })  : _onDragUpdate = onDragUpdate,
-        _onDragEnd = onDragEnd;
+        _onDragEnd = onDragEnd,
+        _onTap = onTap,
+        _onLongPress = onLongPress;
 
-  late final PanGestureRecognizer _panGestureRecognizer;
+  late PanGestureRecognizer _panGestureRecognizer;
+  late TapGestureRecognizer _tapGestureRecognizer;
+  late LongPressGestureRecognizer _longPressGestureRecognizer;
 
   Node _node;
-  Node get node => node;
+  Node get node => _node;
   set node(Node node) {
     if (node == _node) return;
     _node = node;
@@ -68,6 +81,21 @@ class RenderNodeHitTester extends RenderProxyBox {
     _panGestureRecognizer.onEnd = _onDragEnd = onDragEnd;
   }
 
+  VoidCallback _onTap;
+  VoidCallback get onTap => _onTap;
+  set onTap(VoidCallback onTap) {
+    if (_onTap == onTap) return;
+    _tapGestureRecognizer.onTap = _onTap = onTap;
+  }
+
+  VoidCallback? _onLongPress;
+  VoidCallback? get onLongPress => _onLongPress;
+  set onLongPress(VoidCallback? onLongPress) {
+    if (_onLongPress == onLongPress) return;
+    
+    _longPressGestureRecognizer.onLongPress = _onLongPress = onLongPress;
+  }
+
   @override
   void attach(covariant PipelineOwner owner) {
     super.attach(owner);
@@ -75,11 +103,19 @@ class RenderNodeHitTester extends RenderProxyBox {
     _panGestureRecognizer = PanGestureRecognizer(debugOwner: this)
       ..onUpdate = _onDragUpdate
       ..onEnd = _onDragEnd;
+
+    _tapGestureRecognizer = TapGestureRecognizer(debugOwner: this)
+      ..onTap = _onTap;
+
+    _longPressGestureRecognizer = LongPressGestureRecognizer(debugOwner: this)
+      ..onLongPress = _onLongPress;
   }
 
   @override
   void detach() {
     _panGestureRecognizer.dispose();
+    _tapGestureRecognizer.dispose();
+    _longPressGestureRecognizer.dispose();
     super.detach();
   }
 
@@ -94,6 +130,8 @@ class RenderNodeHitTester extends RenderProxyBox {
 
     if (event is PointerDownEvent) {
       _panGestureRecognizer.addPointer(event);
+      _tapGestureRecognizer.addPointer(event);
+      _longPressGestureRecognizer.addPointer(event);
     }
   }
 

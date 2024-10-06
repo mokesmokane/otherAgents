@@ -18,7 +18,7 @@ class ManyBody<N extends Node> implements IForce<N> {
   })  : _distanceMin2 = distanceMin2,
         _distanceMax2 = distanceMax2,
         _theta2 = theta2,
-        _strengths = [] {
+        _strengths = {} {
     _strength = onStrength ?? (_) => strength;
   }
 
@@ -28,7 +28,7 @@ class ManyBody<N extends Node> implements IForce<N> {
 
   late double _alpha;
   N? _node;
-  List<double> _strengths;
+  Map<String, double> _strengths;
 
   double _distanceMin2, _distanceMax2, _theta2;
 
@@ -116,7 +116,7 @@ class ManyBody<N extends Node> implements IForce<N> {
     if (quad is ILeafNode<N> && quad.point != _node) {
       do {
         quad = quad as ILeafNode<N>;
-        w = _strengths[quad.point.index!] * _alpha / l;
+        w = _strengths[quad.point.id]! * _alpha / l;
         _node!
           ..vx += x * w
           ..vy += y * w;
@@ -152,7 +152,7 @@ class ManyBody<N extends Node> implements IForce<N> {
         ..fx = quad.point.x
         ..fy = quad.point.y;
       do {
-        strength += _strengths[q!.point.index!];
+        strength += _strengths[q!.point.id]!;
       } while ((q = q.next) != null);
     }
 
@@ -163,10 +163,9 @@ class ManyBody<N extends Node> implements IForce<N> {
   void _initialize() {
     if (nodes == null) return;
 
-    _strengths = List.filled(n, 0);
-    for (int i = 0; i < n; i++) {
-      _node = nodes![i];
-      _strengths[_node!.index!] = _strength(_node!);
+    _strengths.clear();
+    for (final node in nodes!) {
+      _strengths[node.id] = _strength(node);
     }
   }
 

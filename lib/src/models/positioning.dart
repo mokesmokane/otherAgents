@@ -8,8 +8,7 @@ class XPositioning<N extends Node> implements IForce<N> {
     double strength = 0.1,
     AccessorCallback<double, N>? onStrength,
     AccessorCallback<double, N>? onX,
-  })  : _strengths = [],
-        _xz = [] {
+  }) {
     _strength = onStrength ?? (_) => strength;
     _x = onX ?? (_) => x;
   }
@@ -27,23 +26,39 @@ class XPositioning<N extends Node> implements IForce<N> {
 
   @override
   List<N>? nodes;
-  List<double> _strengths, _xz;
+  late List<double> _strengths, _xz;
 
   @override
   void call([double alpha = 1]) {
-    for (int i = 0; i < n; i++) {
+    if (nodes == null) return;
+    
+    // Ensure arrays are up-to-date
+    if (_strengths.length != nodes!.length || _xz.length != nodes!.length) {
+      _initialize();
+    }
+
+    for (int i = 0; i < nodes!.length; i++) {
       final node = nodes![i];
       node.vx += (_xz[i] - node.x) * _strengths[i] * alpha;
+      if (node.vx.isNaN) {
+        print('node.vx is NaN');
+        node..vx = 0
+        ..vy = 0;
+      }
     }
   }
 
   void _initialize() {
-    _strengths = List.filled(n, 0);
-    _xz = List.filled(n, 0);
+    if (nodes == null) return;
+    
+    int nodeCount = nodes!.length;
+    _strengths = List<double>.filled(nodeCount, 0);
+    _xz = List<double>.filled(nodeCount, 0);
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < nodeCount; i++) {
       final node = nodes![i];
-      if (!(_xz[i] = _x(node)).isNaN) _strengths[i] = _strength(node);
+      _xz[i] = _x(node);
+      _strengths[i] = _strength(node);
     }
   }
 
@@ -60,8 +75,7 @@ class YPositioning<N extends Node> implements IForce<N> {
     double strength = 0.1,
     AccessorCallback<double, N>? onStrength,
     AccessorCallback<double, N>? onY,
-  })  : _strengths = [],
-        _yz = [] {
+  }) {
     _onStrength = onStrength ?? (_) => strength;
     _onY = onY ?? (_) => y;
   }
@@ -79,23 +93,39 @@ class YPositioning<N extends Node> implements IForce<N> {
 
   @override
   List<N>? nodes;
-  List<double> _strengths, _yz;
+  late List<double> _strengths, _yz;
 
   @override
   void call([double alpha = 1]) {
-    for (int i = 0; i < n; i++) {
+    if (nodes == null) return;
+    
+    // Ensure arrays are up-to-date
+    if (_strengths.length != nodes!.length || _yz.length != nodes!.length) {
+      _initialize();
+    }
+
+    for (int i = 0; i < nodes!.length; i++) {
       final node = nodes![i];
       node.vy += (_yz[i] - node.y) * _strengths[i] * alpha;
+      if (node.vy.isNaN) {
+        print('node.vy is NaN');
+        node.vy = 0;
+        node.vx = 0;
+      }
     }
   }
 
   void _initialize() {
-    _strengths = List.filled(n, 0);
-    _yz = List.filled(n, 0);
+    if (nodes == null) return;
+    
+    int nodeCount = nodes!.length;
+    _strengths = List<double>.filled(nodeCount, 0);
+    _yz = List<double>.filled(nodeCount, 0);
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < nodeCount; i++) {
       final node = nodes![i];
-      if (!(_yz[i] = _onY(node)).isNaN) _strengths[i] = _onStrength(node);
+      _yz[i] = _onY(node);
+      _strengths[i] = _onStrength(node);
     }
   }
 

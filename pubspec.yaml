@@ -6,8 +6,10 @@ version: 0.0.2
 publish_to: "none"
 
 dependencies:
+  build_runner: ^2.4.13
   d3_quadtree_flutter:
     git: https://github.com/MathGaps/d3-quadtree-flutter.git
+  json_annotation: ^4.9.0
   quiver: ^3.0.1
 
 dev_dependencies:

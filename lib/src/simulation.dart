@@ -54,7 +54,7 @@ class ForceSimulation<N extends Node> {
 
   void _initializeNodes() {
     for (int i = 0; i < nodes.length; i++) {
-      final node = nodes[i]..index = i;
+      final node = nodes[i];
       if (node.fx != null) node.x = node.fx!;
       if (node.fy != null) node.y = node.fy!;
       if (node.x.isNaN || node.y.isNaN) {
@@ -89,20 +89,46 @@ class ForceSimulation<N extends Node> {
     for (var k = 0; k < iterations; ++k) {
       alpha += (alphaTarget - alpha) * alphaDecay;
 
+      // If alpha falls below alphaMin, set it to 0
+      if (alpha < alphaMin) {
+        alpha = 0;
+      }
+      
       _forces.values.forEach((force) => force(alpha));
 
       // Verlet integration
       for (final node in nodes) {
-        if (node.fx == null)
+        if (node.fx == null){
+          var x = node.x;
+          var vx = node.vx;
+
           node.x += node.vx *= velocityDecay;
+          if (node.x.isNaN) {
+            print('node.x is NaN x:${x} vx:${vx} velocityDecay:${velocityDecay}');
+            node.x = x.isNaN ? 0 : x;
+            node.vx = vx.isNaN ? 0 : vx;
+          }
+        }
         else {
+          if (node.fx?.isNaN ?? true) {
+            print('node.fx is NaN');
+          }
           node
             ..x = node.fx!
             ..vx = 0;
         }
-        if (node.fy == null)
+        if (node.fy == null){
           node.y += node.vy *= velocityDecay;
+          if (node.y.isNaN) {
+            print('node.y is NaN');
+            node.y = node.vy.isNaN ? 0 : node.vy;
+            node.vy = node.vy.isNaN ? 0 : node.vy;
+          }
+        }
         else {
+          if (node.fy!.isNaN) {
+            print('node.fy is NaN');
+          }
           node
             ..y = node.fy!
             ..vy = 0;
