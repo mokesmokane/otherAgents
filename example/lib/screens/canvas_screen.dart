@@ -146,6 +146,43 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
                           });
                         },
                         child: Text('Load'),
+                      ),SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () async {
+                          //ask if they want to save first
+                          bool? save = await showDialog(context: context, builder: (context) {
+                            return AlertDialog(
+                              title: Text('Save current graph?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: Text('Save'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: Text('Discard'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text('Cancel'),
+                                ),
+                              ],
+                            );
+                          });
+                          if(save == true) {
+                            var graph = ref.read(graphStateProvider(graphId!))?.toGraph();
+                            if(graph != null) {
+                              _saveGraph(graph);
+                            }
+                          }
+                          if(save != null) {
+                            _createNewGraph(context);
+                          }
+                          setState(() {
+                            _showOverlay = false;
+                          });
+                        },
+                        child: Text('New'),
                       ),
                     ],
                   ),
