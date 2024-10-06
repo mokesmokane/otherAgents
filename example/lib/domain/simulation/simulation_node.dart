@@ -3,7 +3,7 @@ import 'package:example/domain/vertex.dart';
 class SimulationNode extends f.Node {
   final Vertex vertex;
 
-  SimulationNode(this.vertex) : super(vertex.id);
+  SimulationNode(this.vertex) : super(vertex.id, x:vertex.x??double.nan, y:vertex.y??double.nan);
 
   // You can add any additional properties or methods needed for the simulation here
 

@@ -7,40 +7,44 @@ import 'package:flutter/widgets.dart';
 class NodeHitTester extends SingleChildRenderObjectWidget {
   const NodeHitTester(
     this.node, {
-    required Widget child,
+    Key? key,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onTap,
     this.onLongPress,
-    Key? key,
+    required this.onDragStart,
+    Widget? child,
   }) : super(key: key, child: child);
 
   final Node node;
-
   final GestureDragUpdateCallback onDragUpdate;
   final GestureDragEndCallback onDragEnd;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final GestureDragStartCallback onDragStart;
 
   @override
-  RenderObject createRenderObject(BuildContext context) {
+  RenderNodeHitTester createRenderObject(BuildContext context) {
     return RenderNodeHitTester(
       node,
       onDragUpdate: onDragUpdate,
       onDragEnd: onDragEnd,
       onTap: onTap,
       onLongPress: onLongPress,
+      onDragStart: onDragStart,
     );
   }
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant RenderNodeHitTester renderObject) {
+      BuildContext context, RenderNodeHitTester renderObject) {
     renderObject
       ..node = node
       ..onDragUpdate = onDragUpdate
       ..onDragEnd = onDragEnd
-      ..onTap = onTap;
+      ..onTap = onTap
+      ..onLongPress = onLongPress
+      ..onDragStart = onDragStart;
   }
 }
 
@@ -51,10 +55,12 @@ class RenderNodeHitTester extends RenderProxyBox {
     required GestureDragEndCallback onDragEnd,
     required VoidCallback onTap,
     VoidCallback? onLongPress,
+    required GestureDragStartCallback onDragStart,
   })  : _onDragUpdate = onDragUpdate,
         _onDragEnd = onDragEnd,
         _onTap = onTap,
-        _onLongPress = onLongPress;
+        _onLongPress = onLongPress,
+        _onDragStart = onDragStart;
 
   late PanGestureRecognizer _panGestureRecognizer;
   late TapGestureRecognizer _tapGestureRecognizer;
@@ -96,11 +102,19 @@ class RenderNodeHitTester extends RenderProxyBox {
     _longPressGestureRecognizer.onLongPress = _onLongPress = onLongPress;
   }
 
+  GestureDragStartCallback _onDragStart;
+  GestureDragStartCallback get onDragStart => _onDragStart;
+  set onDragStart(GestureDragStartCallback onDragStart) {
+    if (_onDragStart == onDragStart) return;
+    _panGestureRecognizer.onStart = _onDragStart = onDragStart;
+  }
+
   @override
   void attach(covariant PipelineOwner owner) {
     super.attach(owner);
 
     _panGestureRecognizer = PanGestureRecognizer(debugOwner: this)
+      ..onStart = _onDragStart
       ..onUpdate = _onDragUpdate
       ..onEnd = _onDragEnd;
 

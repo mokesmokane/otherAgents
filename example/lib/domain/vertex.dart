@@ -8,15 +8,37 @@ class Vertex {
   final String id;
   final String label;
   final VertexType type;
+  double? x;
+  double? y;
 
   Vertex({
     String? id,
     required this.label,
     required this.type,
-  }) : id = id ?? Uuid().v4();
+    double? x, // Default x position
+    double? y, 
+  }) : id = id ?? Uuid().v4(),
+    x = x??0,
+    y = y??0;
 
   factory Vertex.fromJson(Map<String, dynamic> json) => _$VertexFromJson(json);
   Map<String, dynamic> toJson() => _$VertexToJson(this);
+
+  Vertex copyWith({
+    String? id,
+    String? label,
+    VertexType? type,
+    double? x,
+    double? y,
+  }) {
+    return Vertex(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      type: type ?? this.type,
+      x: x ?? this.x,
+      y: y ?? this.y,
+    );
+  }
 }
 
 

@@ -6,6 +6,8 @@ import 'package:example/domain/simulation/simulation_edge.dart';
 import 'package:example/domain/simulation/simulation_node.dart';
 import 'package:example/domain/vertex.dart';
 import 'package:example/providers/providers.dart';
+import 'package:example/screens/grid.dart';
+import 'package:example/screens/grid_painter.dart';
 import 'package:example/screens/node_options_menu.dart';
 import 'package:example/util/util.dart';
 import 'package:example/widgets/animated_list_menu.dart';
@@ -17,6 +19,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:d3_force_flutter/d3_force_flutter.dart' as f;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:ui' as ui;
 
 // Update your CanvasScreen widget to be a ConsumerStatefulWidget
 class Canvas extends ConsumerStatefulWidget {
@@ -30,10 +33,9 @@ class Canvas extends ConsumerStatefulWidget {
 class _State extends ConsumerState<Canvas> with TickerProviderStateMixin {
   late final Ticker _ticker;
   late f.ForceSimulation simulation;
-  // late List<int> edgeCounts;
-  // final Map<String,Set<f.Edge>> nodeTargetEdges = {};
-  // final Map<String,Set<f.Edge>> nodeSourceEdges = {};
-  // int maxEdgeCount = 0;
+  bool _showGrid = false;
+  double _gridCellSize = 100.0; // Adjust this value to change the grid size
+  GridForce? _gridForce;
   int i = 0;
 
   f.Node? selectedNode;
@@ -89,10 +91,49 @@ void _updateSimulation() {
     ..setForce('manyBody', f.ManyBody(strength: manyBodyStrength))
     ..setForce(
       'edges',
-      f.Edges(edges: graphState.edges, distance: edgeDistance),
+      f.Edges(edges: graphState.edges, distance: edgeDistance, onStrength: (SimulationEdge e) => _onStrength(e, graphState), onDistance: (SimulationEdge e) => _onDistance(e, graphState, edgeDistance))
     )
+    ..setForce('grid', _gridForce!)
+    ..velocityDecay = 0.1
     ..alpha = 1;  // Restart the simulation
 }
+    double _onDistance(f.Edge<f.Node> edge, GraphState graphState, double edgeDistance) {
+    // // Get the current distance between nodes
+    //   double currentDistance = sqrt(pow(edge.source.x - edge.target.x, 2) + pow(edge.source.y - edge.target.y, 2));
+      
+    //   // Get the number of connections for each node
+    //   int sourceConnections = graphState.edgeCounts[edge.source.id] ?? 0;
+    //   int targetConnections = graphState.edgeCounts[edge.target.id] ?? 0;
+      
+    //   // Base distance
+    //   double baseDistance = 100;
+      
+    //   // Adjust distance based on connections
+    //   double connectionFactor = (sourceConnections + targetConnections) / 10;
+      
+    //   // Adjust distance based on current distance (allows for more flexibility)
+    //   double distanceFactor = currentDistance / baseDistance;
+      
+      return edgeDistance;
+    }
+
+    double _onStrength(f.Edge<f.Node> edge, GraphState graphState) {
+    // // Get the current distance between nodes
+    //   double currentDistance = sqrt(pow(edge.source.x - edge.target.x, 2) + pow(edge.source.y - edge.target.y, 2));
+      
+    //   // Base strength
+    //   double baseStrength = 0.1;
+      
+    //   // Adjust strength based on how far the nodes are from their desired position
+    //   double distanceFactor = currentDistance / 100; // Assuming 100 is the desired distance
+      
+    //   // Adjust strength based on node velocities
+    //   double velocityFactor = (edge.source.vx.abs() + edge.source.vy.abs() + edge.target.vx.abs() + edge.target.vy.abs()) / 4;
+      
+    //   return baseStrength * (1 + distanceFactor) * (1 - velocityFactor);
+      // return 1 / min(graphState.edgeCounts[edge.source.id]??0, graphState.edgeCounts[edge.target.id]??0);
+      return 0.01;
+    }
 
   void _initializeSimulation() {
     var size = MediaQuery.of(context).size;
@@ -104,6 +145,7 @@ void _updateSimulation() {
     var edgeDistance = ref.read(edgeDistanceProvider(graphState.id));
     var manyBodyStrength = ref.read(manyBodyStrengthProvider(graphState.id));
     var collideRadius = ref.read(collideRadiusProvider(graphState.id));
+    _gridForce = GridForce(cellSize: _gridCellSize, strength: 20);
     simulation = f.ForceSimulation(
       phyllotaxisX: size.width / 2,
       phyllotaxisY: size.height / 2,
@@ -114,10 +156,11 @@ void _updateSimulation() {
       ..setForce('manyBody', f.ManyBody(strength: manyBodyStrength))
       ..setForce(
         'edges',
-        f.Edges(edges: edges, distance: edgeDistance),
+        f.Edges(edges: edges, distance: edgeDistance, onDistance: (SimulationEdge e) => _onDistance(e, graphState, edgeDistance), onStrength: (SimulationEdge e) => _onStrength(e, graphState)),
       )
       ..setForce('x', f.XPositioning(x: size.width / 2))
       ..setForce('y', f.YPositioning(y: size.height / 2))
+      ..setForce('grid', _gridForce!)
       ..alpha = 1;
   }
 
@@ -212,8 +255,9 @@ _addNewNode(SimulationNode node, Offset longPressPosition) {
       ..setForce('manyBody', f.ManyBody(strength: manyBodyStrength))
       ..setForce(
         'edges',
-        f.Edges(edges: graphState.edges, distance: edgeDistance),
+        f.Edges(edges: graphState.edges, distance: edgeDistance, onDistance: (SimulationEdge e) => _onDistance(e, graphState, edgeDistance), onStrength: (SimulationEdge e) => _onStrength(e, graphState)),
       )
+      ..setForce('grid', _gridForce!)
       ..alpha = 1;  // 
 }
 
@@ -243,8 +287,9 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
       ..setForce('manyBody', f.ManyBody(strength: manyBodyStrength))
       ..setForce(
         'edges',
-        f.Edges(edges: graphState.edges, distance: edgeDistance),
-      )
+        f.Edges(edges: graphState.edges, distance: edgeDistance, onDistance: (SimulationEdge e) => _onDistance(e, graphState, edgeDistance), onStrength: (SimulationEdge e) => _onStrength(e, graphState)),
+      ) 
+      ..setForce('grid', _gridForce!)
       ..alpha = 1;  // 
   }
 
@@ -281,8 +326,12 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
     ref.listen<GraphState?>(graphStateProvider(graphState.id), (_, __) => _updateSimulation());
     return
       Stack(
-        children: [
-          GestureDetector(
+        children: [CustomPaint(
+        painter: GridPainter(
+          cellSize: _gridCellSize,
+          showGrid: _showGrid,
+        ),
+          child:GestureDetector(
             onTapDown: (details) {
               if (_isSelectingTargetNode) {
                 
@@ -292,7 +341,7 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
             },
             onLongPressStart:(d) =>_handleCanvasLongPress(d.globalPosition),
             child: Container(
-              color: Colors.black,
+              color: Colors.black.withOpacity(0.5),
               width: size.width,
               height: size.height,
               child: ConstrainedBox(
@@ -322,6 +371,11 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
                                 : [],
                             child: NodeHitTester(
                               node,
+                              onDragStart: (_) {
+                                setState(() {
+                                  _showGrid = true;
+                                });
+                              },
                               onDragUpdate: (update) {
                                 node
                                   ..fx = update.globalPosition.dx
@@ -329,6 +383,9 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
                                 simulation..alphaTarget = 0.5;
                               },
                               onDragEnd: (_) {
+                                setState(() {
+                                  _showGrid = false;
+                                });
                                 node
                                   ..fx = null
                                   ..fy = null;
@@ -385,7 +442,7 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
                 ),
               ),
             ),
-          ),
+          )),
           if (_isSelectingTargetNode)
             Positioned(
               top: 50,

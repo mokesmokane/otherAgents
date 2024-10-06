@@ -116,14 +116,21 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
             child: GestureDetector(
               onTap: () => setState(() => _showOverlay = false),
               child: Container(
-                color: Colors.black54,
+                color: Colors.black54.withOpacity(0.5),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          _saveGraph(graph!);
+                          var graph = ref.read(graphStateProvider(graphId!))?.toGraph();
+                          if(graph != null) {
+                          _saveGraph(graph);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('No graph to save')),
+                            );
+                          }
                           setState(() {
                             _showOverlay = false;
                           });

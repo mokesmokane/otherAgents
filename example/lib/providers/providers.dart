@@ -260,7 +260,7 @@ class GraphState {
     return Graph(
       id: id,
       name: name,
-      vertices: Map.fromEntries(nodes.map((n) => MapEntry(n.id, n.vertex))),
+      vertices: Map.fromEntries(nodes.map((n) => MapEntry(n.id, n.vertex.copyWith(x: n.x, y: n.y)))),
       channels: Map.fromEntries(edges.map((e) => MapEntry(e.channel.id, e.channel))),
     );
   }
