@@ -305,6 +305,13 @@ class GraphStateNotifier extends StateNotifier<GraphState?> {
   void set(GraphState? graphState) {
     state = graphState;
   }
+
+  void removeNode(SimulationNode node) {
+    state = state!.copyWith(
+      nodes: state!.nodes.where((n) => n != node).toList(),
+      edges: state!.edges.where((e) => e.source != node && e.target != node).toList(),
+    );
+  }
   // Add other methods as needed
 }
 
@@ -317,3 +324,21 @@ final collideRadiusProvider = StateProvider.family<double, String>((ref, graphId
 final showArrowsProvider = StateProvider.family<bool, String>((ref, graphId) => true);
 final nodeColorProvider = StateProvider.family<Color, String>((ref, graphId) => Colors.blue);
 final edgeColorProvider = StateProvider.family<Color, String>((ref, graphId) => Colors.grey);
+
+// Add these providers at the end of the file
+
+final startNodeProvider = Provider.family<SimulationNode?, String>((ref, graphId) {
+  final graphState = ref.watch(graphStateProvider(graphId));
+  return graphState?.nodes.cast<SimulationNode?>().firstWhere(
+    (node) => node?.type == VertexType.start,
+    orElse: () => null,
+  );
+});
+
+final endNodeProvider = Provider.family<SimulationNode?, String>((ref, graphId) {
+  final graphState = ref.watch(graphStateProvider(graphId));
+  return graphState?.nodes.cast<SimulationNode?>().firstWhere(
+    (node) => node?.type == VertexType.end,
+    orElse: () => null,
+  );
+});

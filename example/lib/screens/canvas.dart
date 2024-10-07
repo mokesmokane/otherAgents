@@ -6,6 +6,7 @@ import 'package:example/domain/simulation/simulation_edge.dart';
 import 'package:example/domain/simulation/simulation_node.dart';
 import 'package:example/domain/vertex.dart';
 import 'package:example/providers/providers.dart';
+import 'package:example/screens/circular_text_painter.dart';
 import 'package:example/screens/grid.dart';
 import 'package:example/screens/grid_painter.dart';
 import 'package:example/screens/node_options_menu.dart';
@@ -411,6 +412,12 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
                                 ref.read(selectedNodeProvider(widget.graphId).notifier).state = node;
                                 _showNodeOptionsMenu(node);
                               },
+                              child: CustomPaint(
+                              painter: CircularTextPainter(
+                                text: node.vertex.label,
+                                color: isSourceNode ? Colors.black : Colors.white,
+                                radius: ref.read(nodeSizeProvider(graphState.id)) / 2,
+                              ),
                               child: Container(
                                 width: ref.read(nodeSizeProvider(graphState.id)),
                                 height: ref.read(nodeSizeProvider(graphState.id)),
@@ -434,7 +441,7 @@ void _addNewEdge(SimulationNode source, SimulationNode target) {
                                         : Colors.white,
                                   ),
                                 ),
-                              ),
+                              )),
                             ),
                           );
                         }),

@@ -12,8 +12,8 @@ class NodeDetailsSheet extends ConsumerWidget {
   final ScrollController scrollController;
 
   final String graphId;
-
-  NodeDetailsSheet({required this.node, required this.scrollController, required this.graphId});
+  final Function(SimulationNode) onDelete;
+  NodeDetailsSheet({required this.node, required this.scrollController, required this.graphId, required this.onDelete});
 
 
 
@@ -46,7 +46,12 @@ class NodeDetailsSheet extends ConsumerWidget {
                             child: Icon(getIconForNodeType(node.type), color: Colors.white),
                           ),
                           title: Text('${node!.label}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                          
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red[300]),
+                            onPressed: () {
+                              onDelete(node);
+                            },
+                          ),
                         ),
                         Divider(color: Colors.white30),
                         Padding(

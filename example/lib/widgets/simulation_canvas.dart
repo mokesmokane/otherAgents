@@ -174,7 +174,12 @@ class RenderSimulationCanvas extends RenderBox
           for (final edge in pd.edges) {
             if (edge.source != edge.target) {
               final pair = NodePair(edge.source, edge.target);
-              edgeGroups.putIfAbsent(pair, () => []).add(edge);
+              final reversePair = NodePair(edge.target, edge.source);
+              if (edgeGroups.containsKey(reversePair)) {
+                edgeGroups[reversePair]!.add(edge);
+              } else {
+                edgeGroups.putIfAbsent(pair, () => []).add(edge);
+              }
             }
           }
         }
@@ -191,16 +196,17 @@ class RenderSimulationCanvas extends RenderBox
         final targetPosition = nodePositions[pair.target];
 
         if (sourcePosition == null || targetPosition == null) continue;
-
         for (int i = 0; i < numEdges; i++) {
-          final curvature = _computeCurvature(i, numEdges);
-          //if source node is selected, make the color red
-          //if target node is selected, make the color blue
-          final color = _selectedNode == pair.source ? Colors.red : _selectedNode == pair.target ? Colors.lime : edgeColor;
+          var edge = edges[i];
+          var selectedIsSource = _selectedNode == edge.source;
+          var selectedIsTarget = _selectedNode == edge.target;
+          var invertArrow = pair.source == edge.target && pair.target == edge.source;
+          final curvature = _computeCurvature(i, numEdges, invertArrow);
+          final color = selectedIsSource ? Colors.red : selectedIsTarget ? Colors.lime : edgeColor;
           _drawCurvedArrow(
             canvas,
-            sourcePosition,
-            targetPosition,
+            invertArrow ? targetPosition : sourcePosition,
+            invertArrow ? sourcePosition : targetPosition,
             curvature,
             Paint()
               ..color = color.withOpacity(1.0)
@@ -244,11 +250,11 @@ class RenderSimulationCanvas extends RenderBox
   }
 
   // Compute curvature based on the index and total number of edges
-  double _computeCurvature(int index, int totalEdges) {
-    if (totalEdges == 1) return 0.0;
-    final maxCurvature = 50.0; // Adjust as needed
+  double _computeCurvature(int index, int totalEdges, bool invertArrow) {
+    if (totalEdges == 1) return 0.0;      
+    final maxCurvature = 50.0; // Adjust a  s needed
     final step = (2 * maxCurvature) / (totalEdges - 1);
-    return -maxCurvature + index * step;
+    return invertArrow ? -maxCurvature + index * step : maxCurvature - index * step;
   }
 
   void _drawCurvedArrow(

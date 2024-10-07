@@ -101,7 +101,8 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
             DraggableScrollableSheet(
               initialChildSize: 0.16,
               minChildSize: 0.0,
-              maxChildSize: 0.5,
+              maxChildSize: 0.9,
+              snapSizes: [0.5, 0.9],
               snap: true,
               builder: (context, scrollController) {
                 return NotificationListener<DraggableScrollableNotification>(
@@ -116,6 +117,16 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
                     node: selectedNode!,
                     scrollController: scrollController,
                     graphId: graphId!,
+                    onDelete: (node) {
+                      ref.read(graphStateProvider(graphId!).notifier).removeNode(node);
+                      ref.read(selectedNodeProvider(graphId!).notifier).state = null;
+                      // Dismiss the sheet by setting its size to minChildSize
+                      scrollController.animateTo(
+                        0,
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );    
+                    },
                   ),
                 );
               },
